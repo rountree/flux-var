@@ -1,0 +1,22 @@
+List of things to do for small-scale demo on Thursday July 2nd.
+
+1. Barry: Write dlopen code for Variorum (will already be linked to Jannson library).
+2. Tapasya: Verify jannson is still linked into variorum.
+3. Tapasya: Implement JSON interface for IBM. (1 day) 
+4. Tapasya: Identify, compile and test CPU and GPU workload for Lassen (Pennant?)
+6. Barry:  Write code to transfer JSON data into KVS.
+7. Barry:  Write the min/mean/max/current power and energy code?
+
+Need soon but not this week:
+1. Barry:  Write code in Flux to query variorum about number of CPUs and accelerators.
+2. Stephanie:  Write code to determine number of CPUs and accelerators.
+3. Stephanie: Code in variorum that describes what the knobs are.  
+4. Stephanie:  Should we compile an IBM-specific version of Var or does Var figure
+	out which arch-dependent code to dlopen?
+5. All:  Determine how to make the JSON interface vendor-neutral.
+
+Need mid-term:
+1. PlatformIO interface
+2. PowerAPI interface
+3. Intel + nVidia knobs
+
