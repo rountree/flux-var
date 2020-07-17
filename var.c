@@ -8,29 +8,53 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
-
+#include <stdlib.h>
 #include <jansson.h>
 #include <flux/core.h>
 
 const char default_service_name[] = "var";
+static uint32_t rank, size;
+
+static double get_power(){
+	static int initialized = 0;
+	if( !initialized ){
+		srand( (unsigned int)13 );
+		initialized = 1;
+	}
+	return rand()/(double)(RAND_MAX);
+}
 
 void timer_handler( flux_reactor_t *r, flux_watcher_t *w, int revents, void* arg ){
+	static double min_watts=99999.0, mean_watts=0.0, max_watts=0.0;
+	static uint64_t nsamples=0;
+	char mykey[1025], myval[1025];
+	double current_watts = get_power();
+	nsamples++;
 
-    flux_kvs_txn_t *t;
-    flux_future_t *f;
+	mean_watts = mean_watts * ( (double)(nsamples-1) / nsamples ) + ( current_watts / nsamples );
+	if( current_watts > max_watts ){ max_watts = current_watts; }
+	if( current_watts < min_watts ){ min_watts = current_watts; }
 
-    flux_log( (flux_t*)arg, LOG_NOTICE, "QQQ Beep!\n" );
+	snprintf( mykey, 1024, "QQQ Node %06" PRIu32 " power ", rank );
+	snprintf( myval, 1024, "QQQ latest %lf, max=%lf, min=%lf, mean=%lf, samples=%" PRIu64 ".", 
+			current_watts, max_watts, min_watts, mean_watts, nsamples );
 
-    t = flux_kvs_txn_create();
-    flux_kvs_txn_put( t, 0, "mykey", "myvalue" );
-    f = flux_kvs_commit( (flux_t*)arg, "primary", 0, t );
-    if (!f || flux_future_get (f, NULL) < 0) { flux_log_error ( (flux_t*)arg, "flux_service_register"); }
-    flux_future_destroy (f);
+	flux_kvs_txn_t *t;
+	flux_future_t *f;
+
+	flux_log( (flux_t*)arg, LOG_NOTICE, mykey);
+	flux_log( (flux_t*)arg, LOG_NOTICE, myval);
+
+	t = flux_kvs_txn_create();
+	flux_kvs_txn_put( t, 0, mykey, myval );
+	f = flux_kvs_commit( (flux_t*)arg, "primary", 0, t );
+	if (!f || flux_future_get (f, NULL) < 0) { flux_log_error ( (flux_t*)arg, "flux_service_register"); }
+	flux_future_destroy (f);
+	flux_kvs_txn_destroy(t);
 }
 
 int mod_main (flux_t *h, int argc, char **argv)
 {
-    uint32_t rank, size;
     flux_watcher_t* timer_watch_p;
     flux_future_t *f;
 
